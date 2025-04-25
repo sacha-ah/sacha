@@ -1,0 +1,85 @@
+import os
+import random
+import time
+from PIL import Image
+import pygame
+
+# 📁 Dossier contenant les images source
+dossier_images = "/Users/sacha.ah/Desktop/MonProjet/Insta"
+
+# Extensions valides
+extensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif"]
+
+# Liste des fichiers image
+fichiers = [f for f in os.listdir(dossier_images) if os.path.splitext(f)[1].lower() in extensions]
+if not fichiers:
+    raise ValueError("Aucune image trouvée dans le dossier.")
+
+# Chargement des images
+images = [Image.open(os.path.join(dossier_images, f)) for f in fichiers]
+
+# Initialisation Pygame plein écran
+pygame.init()
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+info = pygame.display.Info()
+screen_width, screen_height = info.current_w, info.current_h
+clock = pygame.time.Clock()
+
+# Compteur d'export
+export_index = 0
+
+def pixel_reduction_effect(img):
+    facteur = random.uniform(0.0001, 0.05)
+    new_w = max(1, int(img.width * facteur))
+    new_h = max(1, int(img.height * facteur))
+    img_small = img.resize((new_w, new_h), Image.LANCZOS)
+    img_big = img_small.resize(img.size, Image.NEAREST)
+    return img_big
+
+def resize_for_display(img, scale=0.8):
+    new_size = (int(img.width * scale), int(img.height * scale))
+    return img.resize(new_size, Image.LANCZOS)
+
+def prepare_image_for_display(img):
+    img_surface = pygame.image.fromstring(img.tobytes(), img.size, img.mode)
+    return img_surface, img.size
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT or (
+            event.type == pygame.KEYDOWN and event.key == pygame.K_q):
+            running = False
+
+    # Choisir une image aléatoire
+    img = random.choice(images)
+
+    # Appliquer effet aléatoire de pixellisation (85 % du temps)
+    if random.random() < 0.85:
+        img = pixel_reduction_effect(img)
+
+    # Réduire un peu la taille pour l’affichage
+    img_affichage = resize_for_display(img, scale=0.70)
+
+    # Préparer pour affichage avec Pygame
+    img_surface, (img_w, img_h) = prepare_image_for_display(img_affichage)
+
+    # Centrage sur l’écran
+    x = (screen_width - img_w) // 2
+    y = (screen_height - img_h) // 2
+
+    # Affichage
+    screen.fill((255, 255, 255))
+    screen.blit(img_surface, (x, y))
+    pygame.display.flip()
+
+    time.sleep(0.4)
+
+pygame.quit()
+
+
+
+
+
+
+
